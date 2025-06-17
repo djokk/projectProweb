@@ -17,8 +17,8 @@ interface Sms {
 }
 
 interface Info {
-	user: number
-	state: string
+	id: number
+	state: PersonState
 }
 
 export enum PersonState {
@@ -51,9 +51,11 @@ export const useSmsStore = defineStore('messages', () => {
 		},
 	])
 
-	function resetState(info: Info) {
+	function resetState(info: User) {
 		const user = users.find(user => user.id == info.id)
-		user.state = info.state
+		// console.log(user)
+
+		if (user) user.state = info.state
 	}
 
 	function addMessage(info: Sms) {
