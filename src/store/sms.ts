@@ -8,13 +8,18 @@ interface User {
 	state: PersonState
 }
 
-interface Sms {
+export interface Sms {
 	id: number
 	text: string
 	userId: number
 	image?: string
 	time: Date
 }
+
+// interface Chat {
+// 	userId: number
+// 	companion: number
+// }
 
 export enum PersonState {
 	online = 'online',
@@ -37,21 +42,22 @@ export const useSmsStore = defineStore('messages', () => {
 			state: PersonState.online,
 		},
 	])
+
 	const messages = reactive<Sms[]>([
 		{
-			id: 0,
+			id: 1,
 			text: 'string',
 			userId: 1,
 			time: new Date(),
 		},
 	])
 
-	function resetState(info: any) {
+	function resetState(info: User) {
 		const user = users.find(user => user.id == info.id)
-		user.state = info.state
+		if (user) user.state = info.state
 	}
 
-	function addMessage(info: any) {
+	function addMessage(info: Sms) {
 		messages.push(info)
 	}
 

@@ -1,91 +1,85 @@
 <script setup lang="ts">
 import Header from '@/components/Header.vue'
-import { useSmsStore } from '@/store/sms'
-import { computed, onMounted, ref } from 'vue'
+import { PersonState, Sms, useSmsStore } from '@/store/sms'
+import { computed, ref } from 'vue'
 import { DataProps } from './inreface'
+import Message from './Message.vue'
 
 const props = defineProps<DataProps>()
 
 const smsStore = useSmsStore()
-
-const user = computed(() => smsStore.users.find(user => user.id == props.user))
-
-// console.log(user.value.id)
-
-// asd.addMessage({
-// 	id: 2,
-// 	text: 'Привет. Нормально. Как у тебя дела? Я учусь в учебном центре PROWEB',
-// 	userId: 2,
-// 	time: new Date(),
-// })
+const user = computed(() =>
+	smsStore.users.find(user => user.id == props.user_id)
+)
 
 const textInput = ref('')
+let timeout: number | undefined = undefined
+async function resetState() {
+	if (timeout) {
+		clearTimeout(timeout)
+		timeout = undefined
+	}
+	let state = PersonState.write
+	if (!textInput.value) state = PersonState.online
 
-onMounted(() => {
-	// document.addEventListener('keyup', event => {
-	// 	event.preventDefault()
-	// 	if (event.code == 'Enter') {
-	// 		console.log(event.code)
-	// 		// sendSms()
-	// 	}
-	// })
-	const input = document.getElementById(user.value.id)
-	input.addEventListener('keyup', event => {
-		// event.preventDefault()
-		const info = {
-			user: user.value.id,
-			state: smsStore.PersonState.write,
-		}
-		console.log(info)
-
-		textInput._value.length > 0 ? smsStore.resetState(info) : ''
-
-		// console.log(textInput._value.length)
-
-		// textInput._value.length
+	const info = {
+		id: props.user_id,
+		state,
+	}
+	smsStore.resetState(info)
+	timeout = setTimeout(() => {
+		info.state = PersonState.online
+		smsStore.resetState(info)
+	}, 2_000)
+	delay(5_000).then(() => {
+		console.log('12312312312312312-----------------')
 	})
-})
+}
 
-// const sendSms = () => {
-// 	smsStore.addMessage({
-// 		id: 2,
-// 		text: textInput,
-// 		userId: 2,
-// 		time: new Date(),
-// 	})
-// }
+async function delay(time: number): Promise<void> {
+	return new Promise(resolve => {
+		setTimeout(resolve, time)
+	})
+}
+
+function sendForm() {
+	if (!textInput.value) return
+	const sms: Sms = {
+		id: smsStore.messages.length + 1,
+		text: textInput.value,
+		userId: props.user_id,
+		time: new Date(),
+	}
+	textInput.value = ''
+	smsStore.addMessage(sms)
+}
 </script>
 
 <template>
 	<div class="app">
-		<Header :accountInfo="user" />
+		<Header :user_id="user_id" />
 		<!-- <SendPhoto /> -->
 		<main class="main">
 			<ul class="main__list list">
-				<li
+				<Message
+					:message="message"
+					:user_id="user_id"
 					v-for="message in smsStore.messages"
-					class="list__item"
-					:class="[message.userId == user.id ? 'left' : 'right']"
-				>
-					<div class="list__wrapper">
-						<p class="list__text">
-							{{ message.text }}
-						</p>
-					</div>
-					<span class="list__time">
-						{{ message.time.getHours() + ':' + message.time.getMinutes() }}
-					</span>
-				</li>
+					:key="message.id"
+				></Message>
 			</ul>
 		</main>
-		<form class="footer">
-			<input
-				:id="user.id"
-				class="write"
-				type="text"
-				v-model="textInput"
-				placeholder="Написать сообщение..."
-			/>
+		<div class="footer">
+			<form @submit.prevent="sendForm">
+				<input
+					@input="resetState"
+					:id="user.id"
+					class="write"
+					type="text"
+					v-model="textInput"
+					placeholder="Написать сообщение..."
+				/>
+			</form>
 			<button class="button">
 				<svg
 					width="20"
@@ -100,6 +94,6 @@ onMounted(() => {
 					/>
 				</svg>
 			</button>
-		</form>
+		</div>
 	</div>
 </template>
